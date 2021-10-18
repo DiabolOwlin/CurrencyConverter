@@ -1,6 +1,7 @@
 import tkinter as tk
+import tkinter.messagebox
+from tkinter.messagebox import showerror
 from tkinter import ttk
-from tkinter.messagebox import showinfo
 
 import urllib.request
 import xml.dom.minidom as minidom
@@ -36,53 +37,92 @@ def print_dict(in_dict):
         print(key, in_dict[key])
 
 
+class CurrencyConverter:
+    @staticmethod
+    def curr_to_curr(a, curr_out):
+        return a * curr_out
+
+
 class ConverterFrame(ttk.Frame):
     def __init__(self, container):
         super().__init__(container)
+        # field options
         options = {'padx': 5, 'pady': 5}
 
-        # label
-        self.label = ttk.Label(self, text='Currency exchange')
-        self.label.grid(column=0, row=0, sticky=tk.W, **options)
+        # temperature label
+        self.enter_quantity_label = ttk.Label(self, width=25, text='Currency Exchange')
+        self.enter_quantity_label.grid(column=0, row=0, columnspan=4, sticky=tk.N, **options)
 
-        # entry
-        self.enter_quantity = tk.StringVar()
-        self.enter_quantity_entry = ttk.Entry(self, textvariable=self.enter_quantity)
-        self.enter_quantity_entry.grid(column=1, row=0, **options)
-        self.enter_quantity_entry.focus()
+        # temperature entry
+        self.in_quantity = tk.StringVar()
+        self.in_quantity = ttk.Entry(self, textvariable=self.in_quantity)
+        self.in_quantity.grid(column=0, row=1, **options)
+        self.in_quantity.focus()
 
-        # button
-        self.button = ttk.Button(self, text='Exchange')
-        self.button['command'] = self.button_clicked
-        self.button.grid(column=2, row=0, sticky=tk.W, **options)
+        self.currency_in = ttk.Combobox(self, width=5)
+        self.currency_in['values'] = ('PLN', 'THB', 'USD', 'AUD', 'HKD', 'CAD', 'NZD', 'SGD', 'EUR', 'HUF', 'CHF', 'GBP',
+                                      'UAH', 'JPY', 'CZK', 'DKK', 'ISK', 'NOK', 'SEK', 'HRK', 'RON', 'BGN', 'TRY', 'ILS',
+                                      'CLP', 'PHP', 'MXN', 'ZAR', 'BRL', 'MYR', 'RUB', 'IDR', 'INR', 'KRW', 'CNY', 'XDR')
+
+        self.currency_in.grid(column=1, row=1, sticky=tk.W, **options)
+
+        self.currency_out = ttk.Combobox(self, width=5)
+        self.currency_out['values'] = ('PLN', 'THB', 'USD', 'AUD', 'HKD', 'CAD', 'NZD', 'SGD', 'EUR', 'HUF', 'CHF', 'GBP',
+                                       'UAH', 'JPY', 'CZK', 'DKK', 'ISK', 'NOK', 'SEK', 'HRK', 'RON', 'BGN', 'TRY', 'ILS',
+                                       'CLP', 'PHP', 'MXN', 'ZAR', 'BRL', 'MYR', 'RUB', 'IDR', 'INR', 'KRW', 'CNY', 'XDR')
+
+        self.currency_out.grid(column=2, row=1, sticky=tk.W, **options)
+
+        self.convert_button = ttk.Button(self, text='Convert', command=self.convert)
+        self.convert_button.grid(column=3, row=1, sticky=tk.W, **options)
 
         # result label
         self.result_label = ttk.Label(self)
-        self.result_label.grid(row=1, columnspan=3, **options)
+        self.result_label.grid(row=2, columnspan=3, **options)
 
         # add padding to the frame and show it
         self.grid(padx=10, pady=10, sticky=tk.NSEW)
 
-    @staticmethod
-    def button_clicked():
-        showinfo(title='Information',
-                 message='Hello, Tkinter!')
+    def convert(self):
+        """  Handle button click event
+        """
+        try:
+            quantity = float(self.in_quantity.get())
+            curr_in = self.currency_in.get()
+            curr_out = self.currency_out.get()
+
+            if curr_in == curr_out:
+                result = quantity
+
+            elif curr_in == 'PLN':
+                result_curr = 1/currency_dict[curr_out]
+                result = CurrencyConverter.curr_to_curr(quantity, result_curr)
+            elif curr_out == 'PLN':
+                result_curr = currency_dict[curr_out]
+                result = CurrencyConverter.curr_to_curr(quantity, result_curr)
+            else:
+                result_curr = currency_dict[curr_in] / currency_dict[curr_out]
+                result = CurrencyConverter.curr_to_curr(quantity, result_curr)
+
+            result_text = f'{quantity} {curr_in} = {result:.4f} {curr_out}'
+            self.result_label.config(text=result_text)
+        except ValueError as error:
+            showerror(title='Error', message=error)
 
 
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
 
-        # configure the root window
-        self.title('National Bank of Poland')
-        self.geometry('375x75')
+        self.title('Currency Converter')
+        self.geometry('365x100')
         self.resizable(False, False)
 
 
 if __name__ == "__main__":
+    url = "https://www.nbp.pl/kursy/xml/lasta.xml"
+    currency_dict = get_currencies_dictionary(get_data(url))
     app = App()
     ConverterFrame(app)
     app.mainloop()
-    url = "https://www.nbp.pl/kursy/xml/lasta.xml"
-    currency_dict = get_currencies_dictionary(get_data(url))
-    # print_dict(currency_dict)
+    print_dict(currency_dict)
