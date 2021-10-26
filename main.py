@@ -8,11 +8,9 @@ import xml.dom.minidom as minidom
 
 
 class GetData:
-    def __init__(self):
-        pass
 
-    @staticmethod
-    def get_data():
+    @classmethod
+    def get_data(cls):
         web_file = urllib.request.urlopen("https://www.nbp.pl/kursy/xml/lasta.xml")
         return web_file.read()
 
@@ -46,6 +44,11 @@ class GetCurrenciesDictionary:
 #     print("Nasze kursy srednie:\n")
 #     for key in in_dict.keys():
 #         print(key, in_dict[key])
+
+class CurrencyConverter:
+    @classmethod
+    def curr_to_curr(cls, a, curr_out):
+        return a * curr_out
 
 
 class CurrencyError(Exception):
@@ -95,9 +98,6 @@ class ConverterFrame(ttk.Frame):
         # add padding to the frame and show it
         self.grid(padx=10, pady=10, sticky=tk.NSEW)
 
-    def curr_to_curr(a, curr_out):
-        return a * curr_out
-
     def convert(self):
         """  Handle button click event
         """
@@ -123,13 +123,13 @@ class ConverterFrame(ttk.Frame):
                 result = quantity
             elif curr_in == 'PLN':
                 result_curr = 1.0 / GetCurrenciesDictionary.curr_dict[curr_out]
-                result = ConverterFrame.curr_to_curr(quantity, result_curr)
+                result = CurrencyConverter.curr_to_curr(quantity, result_curr)
             elif curr_out == 'PLN':
                 result_curr = GetCurrenciesDictionary.curr_dict[curr_in]
-                result = ConverterFrame.curr_to_curr(quantity, result_curr)
+                result = CurrencyConverter.curr_to_curr(quantity, result_curr)
             else:
                 result_curr = GetCurrenciesDictionary.curr_dict[curr_in] / GetCurrenciesDictionary.curr_dict[curr_out]
-                result = ConverterFrame.curr_to_curr(quantity, result_curr)
+                result = CurrencyConverter.curr_to_curr(quantity, result_curr)
 
             result_text = f'{quantity:.4f} {curr_in} = {result:.4f} {curr_out}'
             self.result_label.config(text=result_text)
