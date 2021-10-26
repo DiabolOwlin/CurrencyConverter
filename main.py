@@ -1,5 +1,5 @@
 import tkinter as tk
-import tkinter.messagebox
+
 from tkinter.messagebox import showerror
 from tkinter import ttk
 
@@ -7,40 +7,45 @@ import urllib.request
 import xml.dom.minidom as minidom
 
 
-def get_data(xml_url):
-    web_file = urllib.request.urlopen(xml_url)
-    return web_file.read()
+class GetData:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def get_data():
+        web_file = urllib.request.urlopen("https://www.nbp.pl/kursy/xml/lasta.xml")
+        return web_file.read()
 
 
-def get_currencies_dictionary(xml_content):
-    dom = minidom.parseString(xml_content)
-    dom.normalize()
-
-    elements = dom.getElementsByTagName("pozycja")
+class GetCurrenciesDictionary:
     curr_dict = {}
 
-    for node in elements:
-        for child in node.childNodes:
-            if child.nodeType == 1:
-                if child.tagName == "kurs_sredni":
-                    if child.firstChild.nodeType == 3:
-                        kurs_sredni = float(child.firstChild.data.replace(',', '.'))
-                if child.tagName == "kod_waluty":
-                    if child.firstChild.nodeType == 3:
-                        kod_waluty = child.firstChild.data
-        curr_dict[kod_waluty] = kurs_sredni
-    return curr_dict
+    def __init__(self):
+        pass
+
+    def get_currencies_dictionary(self):
+
+        dom = minidom.parseString(GetData.get_data())
+        dom.normalize()
+
+        elements = dom.getElementsByTagName("pozycja")
+
+        for node in elements:
+            for child in node.childNodes:
+                if child.nodeType == 1:
+                    if child.tagName == "kurs_sredni":
+                        if child.firstChild.nodeType == 3:
+                            sredni_kurs = float(child.firstChild.data.replace(',', '.'))
+                    if child.tagName == "kod_waluty":
+                        if child.firstChild.nodeType == 3:
+                            kod_wal = child.firstChild.data
+            self.curr_dict[kod_wal] = sredni_kurs
 
 
-def print_dict(in_dict):
-    for key in in_dict.keys():
-        print(key, in_dict[key])
-
-
-class CurrencyConverter:
-    @staticmethod
-    def curr_to_curr(a, curr_out):
-        return a * curr_out
+# def print_dict(in_dict):
+#     print("Nasze kursy srednie:\n")
+#     for key in in_dict.keys():
+#         print(key, in_dict[key])
 
 
 class CurrencyError(Exception):
@@ -48,6 +53,7 @@ class CurrencyError(Exception):
 
 
 class ConverterFrame(ttk.Frame):
+
     def __init__(self, container):
         super().__init__(container)
         # field options
@@ -65,17 +71,17 @@ class ConverterFrame(ttk.Frame):
 
         self.currency_in = ttk.Combobox(self, width=5)
         self.currency_in['values'] = (
-        'PLN', 'THB', 'USD', 'AUD', 'HKD', 'CAD', 'NZD', 'SGD', 'EUR', 'HUF', 'CHF', 'GBP',
-        'UAH', 'JPY', 'CZK', 'DKK', 'ISK', 'NOK', 'SEK', 'HRK', 'RON', 'BGN', 'TRY', 'ILS',
-        'CLP', 'PHP', 'MXN', 'ZAR', 'BRL', 'MYR', 'RUB', 'IDR', 'INR', 'KRW', 'CNY', 'XDR')
+            'PLN', 'THB', 'USD', 'AUD', 'HKD', 'CAD', 'NZD', 'SGD', 'EUR', 'HUF', 'CHF', 'GBP',
+            'UAH', 'JPY', 'CZK', 'DKK', 'ISK', 'NOK', 'SEK', 'HRK', 'RON', 'BGN', 'TRY', 'ILS',
+            'CLP', 'PHP', 'MXN', 'ZAR', 'BRL', 'MYR', 'RUB', 'IDR', 'INR', 'KRW', 'CNY', 'XDR')
 
         self.currency_in.grid(column=1, row=1, sticky=tk.W, **options)
 
         self.currency_out = ttk.Combobox(self, width=5)
         self.currency_out['values'] = (
-        'PLN', 'THB', 'USD', 'AUD', 'HKD', 'CAD', 'NZD', 'SGD', 'EUR', 'HUF', 'CHF', 'GBP',
-        'UAH', 'JPY', 'CZK', 'DKK', 'ISK', 'NOK', 'SEK', 'HRK', 'RON', 'BGN', 'TRY', 'ILS',
-        'CLP', 'PHP', 'MXN', 'ZAR', 'BRL', 'MYR', 'RUB', 'IDR', 'INR', 'KRW', 'CNY', 'XDR')
+            'PLN', 'THB', 'USD', 'AUD', 'HKD', 'CAD', 'NZD', 'SGD', 'EUR', 'HUF', 'CHF', 'GBP',
+            'UAH', 'JPY', 'CZK', 'DKK', 'ISK', 'NOK', 'SEK', 'HRK', 'RON', 'BGN', 'TRY', 'ILS',
+            'CLP', 'PHP', 'MXN', 'ZAR', 'BRL', 'MYR', 'RUB', 'IDR', 'INR', 'KRW', 'CNY', 'XDR')
 
         self.currency_out.grid(column=2, row=1, sticky=tk.W, **options)
 
@@ -88,6 +94,9 @@ class ConverterFrame(ttk.Frame):
 
         # add padding to the frame and show it
         self.grid(padx=10, pady=10, sticky=tk.NSEW)
+
+    def curr_to_curr(a, curr_out):
+        return a * curr_out
 
     def convert(self):
         """  Handle button click event
@@ -112,16 +121,15 @@ class ConverterFrame(ttk.Frame):
             quantity = float(quantity)
             if curr_in == curr_out:
                 result = quantity
-
             elif curr_in == 'PLN':
-                result_curr = 1 / currency_dict[curr_out]
-                result = CurrencyConverter.curr_to_curr(quantity, result_curr)
+                result_curr = 1.0 / GetCurrenciesDictionary.curr_dict[curr_out]
+                result = ConverterFrame.curr_to_curr(quantity, result_curr)
             elif curr_out == 'PLN':
-                result_curr = currency_dict[curr_out]
-                result = CurrencyConverter.curr_to_curr(quantity, result_curr)
+                result_curr = GetCurrenciesDictionary.curr_dict[curr_in]
+                result = ConverterFrame.curr_to_curr(quantity, result_curr)
             else:
-                result_curr = currency_dict[curr_in] / currency_dict[curr_out]
-                result = CurrencyConverter.curr_to_curr(quantity, result_curr)
+                result_curr = GetCurrenciesDictionary.curr_dict[curr_in] / GetCurrenciesDictionary.curr_dict[curr_out]
+                result = ConverterFrame.curr_to_curr(quantity, result_curr)
 
             result_text = f'{quantity:.4f} {curr_in} = {result:.4f} {curr_out}'
             self.result_label.config(text=result_text)
@@ -137,9 +145,8 @@ class App(tk.Tk):
 
 
 if __name__ == "__main__":
-    url = "https://www.nbp.pl/kursy/xml/lasta.xml"
-    currency_dict = get_currencies_dictionary(get_data(url))
+    GetCurrenciesDictionary().get_currencies_dictionary()
+    # print_dict(GetCurrenciesDictionary.curr_dict)
     app = App()
     ConverterFrame(app)
     app.mainloop()
-    # print_dict(currency_dict)
