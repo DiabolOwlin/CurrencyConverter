@@ -43,6 +43,10 @@ class CurrencyConverter:
         return a * curr_out
 
 
+class CurrencyError(Exception):
+    pass
+
+
 class ConverterFrame(ttk.Frame):
     def __init__(self, container):
         super().__init__(container)
@@ -60,16 +64,18 @@ class ConverterFrame(ttk.Frame):
         self.in_quantity.focus()
 
         self.currency_in = ttk.Combobox(self, width=5)
-        self.currency_in['values'] = ('PLN', 'THB', 'USD', 'AUD', 'HKD', 'CAD', 'NZD', 'SGD', 'EUR', 'HUF', 'CHF', 'GBP',
-                                      'UAH', 'JPY', 'CZK', 'DKK', 'ISK', 'NOK', 'SEK', 'HRK', 'RON', 'BGN', 'TRY', 'ILS',
-                                      'CLP', 'PHP', 'MXN', 'ZAR', 'BRL', 'MYR', 'RUB', 'IDR', 'INR', 'KRW', 'CNY', 'XDR')
+        self.currency_in['values'] = (
+        'PLN', 'THB', 'USD', 'AUD', 'HKD', 'CAD', 'NZD', 'SGD', 'EUR', 'HUF', 'CHF', 'GBP',
+        'UAH', 'JPY', 'CZK', 'DKK', 'ISK', 'NOK', 'SEK', 'HRK', 'RON', 'BGN', 'TRY', 'ILS',
+        'CLP', 'PHP', 'MXN', 'ZAR', 'BRL', 'MYR', 'RUB', 'IDR', 'INR', 'KRW', 'CNY', 'XDR')
 
         self.currency_in.grid(column=1, row=1, sticky=tk.W, **options)
 
         self.currency_out = ttk.Combobox(self, width=5)
-        self.currency_out['values'] = ('PLN', 'THB', 'USD', 'AUD', 'HKD', 'CAD', 'NZD', 'SGD', 'EUR', 'HUF', 'CHF', 'GBP',
-                                       'UAH', 'JPY', 'CZK', 'DKK', 'ISK', 'NOK', 'SEK', 'HRK', 'RON', 'BGN', 'TRY', 'ILS',
-                                       'CLP', 'PHP', 'MXN', 'ZAR', 'BRL', 'MYR', 'RUB', 'IDR', 'INR', 'KRW', 'CNY', 'XDR')
+        self.currency_out['values'] = (
+        'PLN', 'THB', 'USD', 'AUD', 'HKD', 'CAD', 'NZD', 'SGD', 'EUR', 'HUF', 'CHF', 'GBP',
+        'UAH', 'JPY', 'CZK', 'DKK', 'ISK', 'NOK', 'SEK', 'HRK', 'RON', 'BGN', 'TRY', 'ILS',
+        'CLP', 'PHP', 'MXN', 'ZAR', 'BRL', 'MYR', 'RUB', 'IDR', 'INR', 'KRW', 'CNY', 'XDR')
 
         self.currency_out.grid(column=2, row=1, sticky=tk.W, **options)
 
@@ -86,16 +92,29 @@ class ConverterFrame(ttk.Frame):
     def convert(self):
         """  Handle button click event
         """
+        quantity = self.in_quantity.get()
+        curr_in = self.currency_in.get()
+        # print(type(curr_in))
+        curr_out = self.currency_out.get()
+        # print(type(curr_out))
         try:
-            quantity = float(self.in_quantity.get())
-            curr_in = self.currency_in.get()
-            curr_out = self.currency_out.get()
-
+            if quantity.isdigit():
+                pass
+            else:
+                raise ValueError()
+            if not curr_in or not curr_out:
+                raise CurrencyError()
+        except ValueError:
+            showerror(title="Error!", message="Need to enter a digit!")
+        except CurrencyError:
+            showerror(title="Error", message="You need to choose currency!")
+        else:
+            quantity = float(quantity)
             if curr_in == curr_out:
                 result = quantity
 
             elif curr_in == 'PLN':
-                result_curr = 1/currency_dict[curr_out]
+                result_curr = 1 / currency_dict[curr_out]
                 result = CurrencyConverter.curr_to_curr(quantity, result_curr)
             elif curr_out == 'PLN':
                 result_curr = currency_dict[curr_out]
@@ -104,10 +123,8 @@ class ConverterFrame(ttk.Frame):
                 result_curr = currency_dict[curr_in] / currency_dict[curr_out]
                 result = CurrencyConverter.curr_to_curr(quantity, result_curr)
 
-            result_text = f'{quantity} {curr_in} = {result:.4f} {curr_out}'
+            result_text = f'{quantity:.4f} {curr_in} = {result:.4f} {curr_out}'
             self.result_label.config(text=result_text)
-        except ValueError as error:
-            showerror(title='Error', message=error)
 
 
 class App(tk.Tk):
