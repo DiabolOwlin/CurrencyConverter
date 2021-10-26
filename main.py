@@ -142,4 +142,4 @@ if __name__ == "__main__":
     app = App()
     ConverterFrame(app)
     app.mainloop()
-    print_dict(currency_dict)
+    # print_dict(currency_dict)
